@@ -1,0 +1,1 @@
+SUBDIRS=libnn include examples
