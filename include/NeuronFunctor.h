@@ -23,17 +23,11 @@
 
 #include "Connector.h"
 
-
-/* The base class for PropagatorBase class. Its main purpose
- * is to define the pure abstract operator () which recomputes the state of the
- * neuron and possible states of derived class (PropagatorType).
- * The derived classes instances will be created only for the time needed to carry
- * the computations, so it can create arbitrarily large storage for storing
- * temporary results without over burdening the neuron itself and thus keeping it small.
- * The first () and next () methods provide means for the NeuralNetwork to iterate
- * over connections (synapses or dendrites), possibly skipping some, to propagate
- * or back propagate signals to their respective neurons.
-*/
+/*
+ * The base class from which user derives the actual neuron functors. Contains
+ * abstract virtual method signatures user should implement in order to defin
+ * neuron's behavior.
+ */
 template <class DendriteFunctor, class NeuronState, class SynapseFunctor> class NeuronFunctor
 {
   public:
@@ -54,9 +48,9 @@ template <class DendriteFunctor, class NeuronState, class SynapseFunctor> class 
     NeuronFunctor () {}
     virtual ~NeuronFunctor () {}
 
-    // Functor's main operation. Must be defined in derived classes. The result
+    // Functor's main operations. Must be defined in derived classes. The result
     // determines whether propagation or back propagation should commence. If yes,
-    // the base classe's methods first () and next () will be used by NeuralNetwork
+    // the base class' methods first () and next () will be used by NeuralNetwork
     // class to iterate over the connected neurons and affect the change on them.
 
     virtual bool propagate (NeuronStateType & state) = 0;
@@ -69,9 +63,17 @@ template <class DendriteFunctor, class NeuronState, class SynapseFunctor> class 
 
 
 
-/*
- * Base class for Propagator class.
- */
+/* The base class for PropagatorBase class. Its main purpose
+ * is to define the pure abstract operator () which recomputes the state of the
+ * neuron and possibly state of a concrete class derived by the user from Propagator class.
+ * The Propagator class or its derived classes instances will be created only for the time
+ * needed to carry the computations, so it can create arbitrarily large storage for storing
+ * temporary results without over burdening the neuron itself and thus keeping it small.
+ * The first () and next () methods provide means for the NeuralNetwork to iterate
+ * over connections (synapses or dendrites), possibly skipping some, to propagate
+ * or back propagate signals to their respective neurons. It is the Propagator class that
+ * calls all the methods implemented in neuron's functors.
+*/
 class PropagatorBase
 {
   public:

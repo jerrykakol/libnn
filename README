@@ -1,0 +1,90 @@
+*******************************************************************************
+*                           _       _                                         *
+*                          | |  (_)| |_    _ __   _ __                        *
+*                          | |  | ||  _ \ | '_ \ | '_ \                       *
+*                          | |_ | || |_| || | | || | | |                      *
+*                           \__||_| \___/ |_| |_||_| |_|                      *
+*                                                                             *
+*                  Generic neural network/graph computing library             *
+*                                                                             *
+*                              (C) Jerry Kakol, 2014                          *
+*                             <jerry.kakol@gmail.com>                         *
+*                                                                             *
+*                                  Version 0.1                                *
+*                                                                             *
+*******************************************************************************
+
+
+Libnn is a library for neural network modeling and neurocomputing as well as for 
+implementing various types of graph computations, where transfer of information 
+between nodes and algorithms for processing this information are implemented 
+within the network (in the nodes) as opposed to performing them externally and
+putting the results "by hand" back into the nodes' data structures. This is for
+instance the case with "classic" implementation of neural network, where 
+backpropagation is a result of external computation whose results are then used
+to affect the neurons' weights. In libnn everything that is being computed is
+computed by the nodes (neurons) in a quasi-parallel manner, similar to the actual,
+biological neural networks or cellular automata.
+
+The design of the library provides the platform and framework of abstract nodes
+forming a network of user defined configuration (or a random one) and implements
+the necessary machinery of inter-neuronal interactions. All that the user has to 
+define is:
+
+1) Data structure representing the state of the neuron (can be completely arbitrary),
+
+2) Data structure representing the signal, that is the unit of information that is
+   to be exchanged by neurons through synapse-dendrite connections,
+   
+3) Data structure representing the state of dendrites (classically - the weights),
+   which also can be completely arbitrary
+   
+4) Algorithms (functions) to be used for processing the data structures mentioned 
+   above, that is functions that perform the actual computing on the data that
+   neurons exchange, both for the normal, synapse-to-dendrite signal propagation
+   and back-propagation, that can be used to effect the neuronal learning process,
+   as well as is the case of biological networks, propagate the information in the 
+   opposite, dendrite-to-synapse direction.
+   
+These four elements define completely the behavior of neurons. The definitions are
+provided by means of three functor classes:
+
+1) DendriteFunctor - performs operations on signals received by individual dendrite
+   received (propagated) from synapse connected to the dendrite and updates the 
+   dendrite's state which will later be used to recompute the neuron's state. Being
+   a regular C++ class it can have its own data fields and thus hold its own state,
+   but it will live only for the duration of computations, unlike the dendrite's 
+   state, which exists for as long as the neuron.
+2) SynapseFunctor - computes the signal to be propagated based on newly recomputed
+   state of the neuron. This functor can also have its temporary state but synapse
+   itself doesn't have one. Therefore SynapseFunctor acts more like a filter trans-
+   forming neuron's state nto a signal to be propagated.
+3) NeuronFunctor - the central part of the definition of neuron's functionality. It
+   receives states of individual dendrites and recomputes the neuron's state. Also
+   decides whether the neuron should fire (that is, to propagate a signal through
+   its synapses, for instance, based on the comparison of the old state with the new
+   one) as well as what to do with signals back-propagated to it.
+   
+None of the methods defined in these three functors are to be called by the user 
+directly. A separate class, called Propagator created for the duration of neuron's
+activity, does it transparently for the user in the course of normal operation of 
+the network.
+
+The functors are templates and this is how the generic and universal character of
+the neurons and their networks is achieved in libnn library. The template parameters
+of DendriteFunctor and SynapseFunctor are the data types that determine the expected
+neuron state, signal and in case of DendriteFunctor - the dendrite state. The
+NeuronFunctor is parameterized by neuron state and the other two functor typenames.
+It is the NeuronFunctor's neuron state parameter that is actually used in instantiating 
+the Neuron class (which is also a template), so in principle the neuron state typename
+supplied to DendriteFunctor and Synapse functor can be something different. It is up
+to the user ensure the consistency of these definitions. The fact that neuron state data 
+structure can be defined in three separate functors can be used for instance to limit
+the extent to which DendriteFunctor and Synapse functor can see the internals of the
+neuron's state. Since neuron's state can be an arbitrary elaborate structure its
+conceivable that dendrites and synapses could see a base class of a much reacher
+derived class that would be the actual neuron state.
+
+The actual, practical example of how to define the functors, create the network and
+run is provided in the examples/random_network.cc program.
+
